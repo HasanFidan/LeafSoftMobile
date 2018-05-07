@@ -1,4 +1,9 @@
-﻿using Android.Graphics;
+﻿using Android.Content;
+using Android.Content.PM;
+using Android.Graphics;
+using Android.Locations;
+using Android.Media;
+using Android.Telephony;
 using Android.Widget;
 using AndroidHUD;
 using ExLeafSoftApplication.Common;
@@ -26,6 +31,7 @@ namespace ExLeafSoftApplication.Droid
         public void ShowMessage(string message)
         {
             var activity = CrossCurrentActivity.Current.Activity;
+           
             //Toast.MakeText(activity, "This is toast message", ToastLength.Short);
             AndHUD.Shared.ShowToast(activity,message , MaskType.Clear, TimeSpan.FromMilliseconds(1500));
         }
@@ -127,6 +133,9 @@ namespace ExLeafSoftApplication.Droid
         }
 
 
+        
+
+
         public List<FileMetaInformation> GetTumbNailImages(string fieldGuid)
         {
             string[] fileList = GetPhotoPathList(fieldGuid);
@@ -173,6 +182,128 @@ namespace ExLeafSoftApplication.Droid
             }
         }
 
+        public void GetExifMetadata(string fileName, string OrderId)
+        {
+          
+            ExifInterface exif = new ExifInterface(fileName);
+           
+            string exifMake = exif.GetAttribute(ExifInterface.TagMake);
+            string exifModel = exif.GetAttribute(ExifInterface.TagModel);
+
+            if (string.IsNullOrEmpty(exifMake))
+                exifMake = string.Empty;
+            if (string.IsNullOrEmpty(exifModel))
+                exifModel = string.Empty;
+
+
+            exifMake = exifMake + " " + exifModel;
+            string exifExtraData = GetLocationForExif(exif);
+            string tmp =  GetPhoneInformation();
+            string exifUserData = tmp + "BatchID=" + OrderId + ",";
+            exifModel = exifUserData + exifExtraData;
+
+            exif.SetAttribute(ExifInterface.TagMake, exifModel);
+            exif.SetAttribute(ExifInterface.TagModel,exifModel);
+            exif.SetAttribute(ExifInterface.TagImageDescription, exifModel);
+
+            exif.SaveAttributes();
+          
+            //ReadExifMetadata(fileName);
+
+        }
+
+
+        private void ReadExifMetadata(string fileName)
+        {
+            ExifInterface exif = new ExifInterface(fileName);
+            string model = exif.GetAttribute(ExifInterface.TagModel);
+            string desc = exif.GetAttribute(ExifInterface.TagImageDescription);
+            string make = exif.GetAttribute(ExifInterface.TagMake);
+
+
+
+
+        }
+
+
+        private string GetPhoneInformation()
+        {
+            string returnValue = string.Empty;
+
+            var activity = (MainActivity)CrossCurrentActivity.Current.Activity;
+            //TelephonyManager phone = activity.phoneManager;
+            activity.CheckPermission();
+
+            if (!string.IsNullOrEmpty(activity.exifUserData))
+                returnValue = activity.exifUserData;
+
+            return returnValue;
+
+        }
+
+        long lastfix = 0;
+
+        private string GetLocationForExif(ExifInterface exif)
+        {
+            string exifExtraData = string.Empty;
+            var activity = (MainActivity) CrossCurrentActivity.Current.Activity;
+            LocationManager locationManager = activity.locationManager;
+            var criteria = new Criteria { PowerRequirement = Power.Medium };
+
+            var bestProvider = locationManager.GetBestProvider(criteria, true);
+            var location = locationManager.GetLastKnownLocation(bestProvider);
+            if (location != null)
+            {
+                string locProvider = location.Provider;
+                long newlastfix = location.Time;
+                bool uniqueFix = newlastfix != lastfix;
+                lastfix = newlastfix;
+                exifExtraData = "loc=" + locProvider + "," + "uniqueLocFix=" + uniqueFix + ","; ;
+                double locLat = location.Latitude;
+                double locLon = location.Longitude;
+
+                try
+                {
+                    int num1Lat = (int)Math.Floor(locLat);
+                    int num2Lat = (int)Math.Floor((locLat - num1Lat) * 60);
+                    double num3Lat = (locLat - ((double)num1Lat + ((double)num2Lat / 60))) * 3600000;
+
+                    int num1Lon = (int)Math.Floor(locLon);
+                    int num2Lon = (int)Math.Floor((locLon - num1Lon) * 60);
+                    double num3Lon = (locLon - ((double)num1Lon + ((double)num2Lon / 60))) * 3600000;
+
+                    exif.SetAttribute(ExifInterface.TagGpsLatitude, num1Lat + "/1," + num2Lat + "/1," + num3Lat + "/1000");
+                    exif.SetAttribute(ExifInterface.TagGpsLongitude, num1Lon + "/1," + num2Lon + "/1," + num3Lon + "/1000");
+
+                    if (locLat > 0)
+                    {
+                        exif.SetAttribute(ExifInterface.TagGpsLatitudeRef, "N");
+                    }
+                    else
+                    {
+                        exif.SetAttribute(ExifInterface.TagGpsLatitudeRef, "S");
+                    }
+
+                    if (locLon > 0)
+                    {
+                        exif.SetAttribute(ExifInterface.TagGpsLongitudeRef, "E");
+                    }
+                    else
+                    {
+                        exif.SetAttribute(ExifInterface.TagGpsLongitudeRef, "W");
+                    }
+
+                }
+                catch (Exception e)
+                {
+                }
+
+            }
+          
+
+
+            return exifExtraData;
+        }
 
         //public static byte[] ResizeImageWinPhone (byte[] imageData, float width, float height)
         //{

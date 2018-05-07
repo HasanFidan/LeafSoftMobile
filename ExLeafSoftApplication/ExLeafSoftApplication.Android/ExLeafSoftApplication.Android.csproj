@@ -53,6 +53,9 @@
     <PackageReference Include="Acr.UserDialogs">
       <Version>7.0.1</Version>
     </PackageReference>
+    <PackageReference Include="ExifLib.PCL">
+      <Version>1.0.2-pre01</Version>
+    </PackageReference>
     <PackageReference Include="sqlite-net-pcl">
       <Version>1.4.118</Version>
     </PackageReference>
@@ -82,6 +85,7 @@
     <Compile Include="Services\LongRunningTaskService.cs" />
   </ItemGroup>
   <ItemGroup>
+    <AndroidAsset Include="Assets\TodoSQLite.db3" />
     <None Include="Resources\AboutResources.txt" />
     <None Include="Assets\AboutAssets.txt" />
     <AndroidResource Include="Resources\layout\CameraLayout.axml" />

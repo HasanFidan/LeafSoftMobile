@@ -14,6 +14,7 @@ namespace ExLeafSoftApplication.Common
         string CameraFolderPath();
         void ShowMessage(string message);
         List<FileMetaInformation> GetTumbNailImages(string fieldGuid);
+        void GetExifMetadata(string fileName, string OrderId);
     }
 
     public class FileMetaInformation

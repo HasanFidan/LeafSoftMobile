@@ -50,7 +50,7 @@ namespace ExLeafSoftApplication.Data
 
                 PhotoManagerService ms = new PhotoManagerService();
                
-                List<FileMetaInformation> encoded = ms.GetPhotos(ms.GetPhotoList());
+                List<FileMetaInformation> encoded = ms.GetPhotos(ms.GetPhotoList(""));
 
                 if (encoded.Count == 0)
                     return string.Empty;

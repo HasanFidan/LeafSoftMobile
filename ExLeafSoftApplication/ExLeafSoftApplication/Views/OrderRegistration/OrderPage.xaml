@@ -40,7 +40,7 @@
                 </Button>
             </StackLayout>
             <BoxView BackgroundColor="Red" HeightRequest="1" />-->
-            <StackLayout IsEnabled="{Binding CropSelectionIsEnabled,Mode=OneWay}" Orientation="Horizontal" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand"  Spacing="20">
+            <StackLayout  Orientation="Horizontal" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand"  Spacing="20">
 
                
                 <control:CustomScrollView Orientation="Horizontal" HorizontalOptions="Start" VerticalOptions="Start" ItemsSource="{Binding listofImgs}" HeightRequest="120">
@@ -65,13 +65,13 @@
 
 
 
-                <Button IsEnabled="{Binding CropSelectionIsEnabled,Mode=OneWay}" Text="{Binding BtnCropSelection}"  
+                <Button IsEnabled="{Binding CropSelectionIsEnabled}" Text="{Binding BtnCropSelection}"  
                         Command="{Binding CommandCropSelection}" HeightRequest="35"  HorizontalOptions="End" VerticalOptions="Start">
 
                 </Button>
                
             </StackLayout>
-            <StackLayout IsEnabled="{Binding CropSelectionIsEnabled,Mode=OneWay}" Orientation="Horizontal" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <StackLayout IsEnabled="{Binding OrderCompleteIsEnabled}" Orientation="Horizontal" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
                 <Button  Text="Complete Order"  Command="{Binding CommandCompleteOrder}"  HeightRequest="35" VerticalOptions="Start" HorizontalOptions="FillAndExpand" ></Button>
             </StackLayout>
         </StackLayout>

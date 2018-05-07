@@ -31,6 +31,8 @@ namespace ExLeafSoftApplication.ViewModels
         public INavigation Navigation { get; set; }
         public string SelectedImagePath { get; set; }
 
+        private int totalCropCount { get; set; }
+
         private ObservableCollection<ThumbNail> _listofImgs;
 
         public ObservableCollection<ThumbNail> listofImgs {
@@ -74,6 +76,17 @@ namespace ExLeafSoftApplication.ViewModels
             }
         }
 
+        private bool _orderCompleteIsEnabled { get; set; }
+        public bool OrderCompleteIsEnabled
+        {
+            get { return _orderCompleteIsEnabled; }
+            set
+            {
+                _orderCompleteIsEnabled = value;
+                OnPropertyChanged(nameof(OrderCompleteIsEnabled));
+            }
+        }
+
         private string _btnCropSelection = string.Empty;
         public string BtnCropSelection
         {
@@ -107,8 +120,10 @@ namespace ExLeafSoftApplication.ViewModels
 
         public OrderRegistrationViewModel()
         {
+            totalCropCount = 0;
             SelectedImagePath = string.Empty;
             CropSelectionIsEnabled = false;
+            OrderCompleteIsEnabled = false;
             BtnCropSelection = "Select Crop";
             BtnFarmerSelection = "Select Farmer";
             BtnFieldSelection = "Go Field";
@@ -148,6 +163,12 @@ namespace ExLeafSoftApplication.ViewModels
 
         async Task ExecuteCompleteOrderCommand()
         {
+            OrderCompleteIsEnabled = false;
+
+            PhotoManagerService ms = new PhotoManagerService();
+            string[] photoPaths = ms.GetPhotoList(SelectedField.FieldGuid);
+
+          
             Guid orderGuid = Guid.NewGuid();
 
             OrderModel orderModel = new OrderModel {
@@ -182,12 +203,26 @@ namespace ExLeafSoftApplication.ViewModels
 
             }
 
+            foreach(string photo in photoPaths)
+            {
+                ms.SetImageExif(photo,orderGuid.ToString());
+            }
+
+
             await Navigation.PopAsync();
         }
 
         async Task ExecuteCropSelectionCommand(string param)
         {
             CropSelectionIsEnabled = false;
+
+            //totalCropCount++;
+
+            if (listofImgs != null && listofImgs.Count >= 3)
+            {
+                OrderCompleteIsEnabled = true;
+                return;
+            }
 
             if (param != null)
                 SelectedImagePath = param as string;

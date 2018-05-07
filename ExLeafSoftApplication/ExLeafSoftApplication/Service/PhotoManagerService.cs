@@ -18,12 +18,17 @@ namespace ExLeafSoftApplication.Data
            
         }
 
-        public string[] GetPhotoList()
+        public string[] GetPhotoList(string FieldGuid)
         {
             DependencyService.Get<IFileHelper>().ShowMessage("Photo sent started!!!");
-            string[] files = DependencyService.Get<IFileHelper>().GetPhotoPathList("");
+            string[] files = DependencyService.Get<IFileHelper>().GetPhotoPathList(FieldGuid);
             return files;
 
+        }
+
+        public void SetImageExif(string fileName,string Orderid)
+        {
+            DependencyService.Get<IFileHelper>().GetExifMetadata(fileName, Orderid);
         }
 
         

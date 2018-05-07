@@ -11,6 +11,9 @@ using ExLeafSoftApplication.Views;
 using ExLeafSoftApplication.Droid;
 using Android.Content;
 using AndroidHUD;
+using ExifLib;
+using Android.Media;
+using Android.Locations;
 
 [assembly: ExportRenderer(typeof(CameraPage), typeof(CameraPageRenderer))]
 namespace ExLeafSoftApplication.Droid
@@ -199,6 +202,12 @@ namespace ExLeafSoftApplication.Droid
             }
         }
 
+
+      
+
+       
+      
+
         async void TakePhotoButtonTapped(object sender, EventArgs e)
         {
             camera.StopPreview();
@@ -222,45 +231,53 @@ namespace ExLeafSoftApplication.Droid
                 if (!string.IsNullOrEmpty(selectedImageName))
                 {
                     filePath = System.IO.Path.Combine(folderPath, string.Format("{0}.jpg", selectedImageName));
+                    //ReadExifMetadata(filePath);
                     File.Delete(filePath);
-                    
+
                 }
 
                 if ((MainPage as CameraPage).GetViewModel.SelectedCrop != null)
                     SelectedCrop = (MainPage as CameraPage).GetViewModel.SelectedCrop;
+                string fileName = string.Format("NEW_{0}_{1}_{2}.jpg", SelectedCrop.Crop_Name, selectedField.FieldGuid, SelectedCrop.Crop_ID.ToString());
+                filePath = System.IO.Path.Combine(folderPath, fileName);
 
-                filePath = System.IO.Path.Combine(folderPath, string.Format("NEW_{0}_{1}_{2}.jpg",SelectedCrop.Crop_Name,selectedField.FieldGuid,SelectedCrop.Crop_ID.ToString()));
 
-             
                 //End of
 
-               
+
 
                 var fileStream = new FileStream(filePath, FileMode.Create);
-                await image.CompressAsync(Bitmap.CompressFormat.Jpeg,80, fileStream);
+
+                await image.CompressAsync(Bitmap.CompressFormat.Jpeg, 80, fileStream);
+
                 fileStream.Close();
                 image.Recycle();
                 AndHUD.Shared.ShowToast(activity, "Photo saved!!!", MaskType.Clear, TimeSpan.FromMilliseconds(1500));
+
                 var intent = new Android.Content.Intent(Android.Content.Intent.ActionMediaScannerScanFile);
                 var file = new Java.IO.File(filePath);
                 var uri = Android.Net.Uri.FromFile(file);
                 intent.SetData(uri);
                 //Forms.Context.SendBroadcast(intent);
                 Context.SendBroadcast(intent);
+                //GetExifMetadata(filePath, SelectedCrop.Crop_Name);
 
 
 
-               await MainPage.Navigation.PopModalAsync();
 
 
 
             }
             catch (Exception ex)
             {
-                AndHUD.Shared.ShowToast(activity,"Photo can not taken!!!", MaskType.Clear, TimeSpan.FromMilliseconds(1500));
+                AndHUD.Shared.ShowToast(activity, "Photo can not taken!!!", MaskType.Clear, TimeSpan.FromMilliseconds(1500));
                 System.Diagnostics.Debug.WriteLine(@"				", ex.Message);
-            }
 
+            }
+            finally
+            {
+                await MainPage.Navigation.PopModalAsync();
+            }
             //camera.StartPreview();
         }
     }

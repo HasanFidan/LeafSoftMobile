@@ -12,6 +12,12 @@ using ExLeafSoftApplication.Droid.Services;
 using ExLeafSoftApplication.Common;
 using Android.Content;
 using Plugin.CurrentActivity;
+using Android.Locations;
+using Android.Telephony;
+using Android.Support.V4.Content;
+using Android;
+using Android.Support.V4.App;
+using Android.Support.Design.Widget;
 
 namespace ExLeafSoftApplication.Droid
 {
@@ -20,6 +26,12 @@ namespace ExLeafSoftApplication.Droid
         ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation)]
     public class MainActivity : global::Xamarin.Forms.Platform.Android.FormsAppCompatActivity
     {
+
+        public LocationManager locationManager { get; set; }
+        public TelephonyManager phoneManager { get; set; }
+        public string exifUserData { get; set; }
+        Android.Views.View layout;
+
         protected override void OnCreate(Bundle bundle)
         {
             TabLayoutResource = Resource.Layout.Tabbar;
@@ -27,6 +39,9 @@ namespace ExLeafSoftApplication.Droid
 
             base.OnCreate(bundle);
             //RegisterActivityLifecycleCallbacks(this);
+            locationManager = (LocationManager)GetSystemService(LocationService);
+            phoneManager = (TelephonyManager)GetSystemService(TelephonyService);
+
             global::Xamarin.Forms.Forms.Init(this, bundle);
             global::Xamarin.FormsMaps.Init(this, bundle);
             CrossCurrentActivity.Current.Activity = this;
@@ -38,6 +53,93 @@ namespace ExLeafSoftApplication.Droid
         {
             base.OnStop();
         }
+
+
+
+        public void CheckPermission()
+        {
+            Permission permissionCheck = ContextCompat.CheckSelfPermission(this, Manifest.Permission.ReadPhoneState);
+
+            if (permissionCheck != Permission.Granted)
+            {
+                RequestCameraPermission();
+                //ActivityCompat.RequestPermissions(this, new String[] { Manifest.Permission.ReadPhoneState },0);
+            }
+            else
+            {
+                GetInformation();
+            }
+        }
+
+
+        void RequestCameraPermission()
+        {
+            
+
+            if (ActivityCompat.ShouldShowRequestPermissionRationale(this, Manifest.Permission.ReadPhoneState))
+            {
+
+                Snackbar.Make(layout, "Allow to read phone state",
+                   Snackbar.LengthIndefinite).SetAction("ok", new Action<Android.Views.View>(delegate (Android.Views.View obj) {
+                       ActivityCompat.RequestPermissions(this, new String[] { Manifest.Permission.ReadPhoneState }, 12);
+                   })).Show();
+            }
+            else
+            {
+                // Camera permission has not been granted yet. Request it directly.
+                ActivityCompat.RequestPermissions(this, new String[] { Manifest.Permission.ReadPhoneState }, 12);
+            }
+        }
+
+
+        public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)
+        {
+            switch (requestCode)
+            {
+                case 12:
+                    if ((grantResults.Length > 0) && (grantResults[0] == Permission.Granted))
+                    {
+                        GetInformation();
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        private void GetInformation()
+        {
+            TelephonyManager phone = this.phoneManager;
+
+            if (phone.GetImei(0) != null)
+            {
+                exifUserData += "phoneId=" + phone.GetImei(0) + ",";
+                if (phone.Line1Number != null)
+                    exifUserData += "phoneNr1=" + phone.Line1Number + ",";
+                if (phone.SimSerialNumber != null)
+                    exifUserData += "simSerial=" + phone.SimSerialNumber + ",";
+                if (phone.DeviceSoftwareVersion != null)
+                    exifUserData += "phoneSoftwareVersion=" + phone.DeviceSoftwareVersion + ",";
+
+                exifUserData += "androidRelease=" + Android.OS.Build.VERSION.Release + ",";
+                exifUserData += "androidManufacturer=" + Android.OS.Build.Manufacturer + ",";
+                exifUserData += "androidModel=" + Android.OS.Build.Model + ",";
+                exifUserData += "androidProduct=" + Android.OS.Build.Product + ",";
+                exifUserData += "androidBrand=" + Android.OS.Build.Brand + ",";
+            }//end of if (phone.DeviceId != null)
+
+            try
+            {
+                PackageInfo info = this.PackageManager.GetPackageInfo(this.PackageName, 0);
+                exifUserData += "leafspotAppVersion=" + info.VersionName + ",";
+            }
+            catch (Exception e)
+            { }
+
+            
+        }
+
 
         //private void StartBackgroundDataRefreshService()
         //{
@@ -51,7 +153,7 @@ namespace ExLeafSoftApplication.Droid
         //    GcmNetworkManager.GetInstance(this).Schedule(pt);
         //}
 
-    
+
 
 
         void WireUpLongRunningTask()
